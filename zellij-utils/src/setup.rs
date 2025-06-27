@@ -619,7 +619,7 @@ impl Setup {
                 std::process::exit(1);
             },
         };
-        let mut out = std::io::stdout();
+        let mut out = CompletionBuffer {};
         clap_complete::generate(shell, &mut CliArgs::command(), "zellij", &mut out);
         // add shell dependent extra completion
         match shell {
@@ -737,6 +737,21 @@ fn merge_attach_command_options(
         cli_config_options
     };
     cli_config_options
+}
+
+struct CompletionBuffer {}
+impl Write for CompletionBuffer {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        if let Ok(completion) = String::from_utf8(buf.to_vec()) {
+            let completion = completion.replace(":LAYOUT:_files", ":LAYOUT:_zellij_layouts");
+            print!("{completion}");
+        }
+        return Ok(buf.len());
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
 }
 
 #[cfg(test)]
